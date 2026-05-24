@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>115年管嶼國小桌球夏令營 - 費用計算機 V6</title>
+    <title>115年管嶼國小桌球夏令營 - 費用計算機 V8</title>
     <style>
         :root {
             --primary-color: #1e3d59;
@@ -30,7 +30,7 @@
         }
 
         .container {
-            max-width: 1150px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
@@ -230,6 +230,14 @@
             background-color: #129a63;
         }
 
+        .btn-danger {
+            background-color: #e53e3e;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #c53030;
+        }
+
         .text-preview {
             background-color: #f8fafc;
             border: 1px dashed #cbd5e0;
@@ -274,8 +282,6 @@
             color: #aaa;
             cursor: pointer;
         }
-
-        .modal-close:hover { color: #333; }
 
         .modal-img-container {
             margin: 15px 0;
@@ -327,7 +333,7 @@
 <div class="container">
     <header>
         <h1>115年管嶼國小桌球夏令營</h1>
-        <p style="opacity: 0.9; font-size: 14px; margin-top: 5px;">費用計算機 & 家長通知單自動生成系統 V6</p>
+        <p style="opacity: 0.9; font-size: 14px; margin-top: 5px;">費用計算機 & 智慧暫存名冊系統 V8</p>
     </header>
 
     <div class="grid">
@@ -434,13 +440,52 @@
             </div>
 
             <div class="card">
-                <div class="card-title">⑤ 家長通知發送工具</div>
-                <button class="btn btn-success" onclick="copyNotificationText()">📋 複製完美排版通知文字</button>
-                <button class="btn btn-primary" onclick="generateAndShowImage()">🖼️ 產出/下載費用明細圖片</button>
+                <div class="card-title">⑤ 家長通知與暫存紀錄</div>
+                
+                <!-- 紀錄開關控制 -->
+                <div style="padding: 10px; background: #f0fdf4; border-radius: 6px; margin-bottom: 12px; border: 1px solid #bbf7d0;">
+                    <label class="checkbox-container" style="font-size: 13px; color:#166534;">
+                        <input type="checkbox" id="enableAutoRecord" checked style="accent-color: #166534;">
+                        確認要紀錄：複製或產出圖片時，自動儲存此學員至名冊
+                    </label>
+                </div>
+
+                <button class="btn btn-success" onclick="triggerCopyAction()">📋 複製完美排版通知文字</button>
+                <button class="btn btn-primary" onclick="triggerImageAction()">🖼️ 產出/下載費用明細圖片</button>
                 
                 <div style="margin-top:12px; font-weight:bold; font-size:13px; color:var(--primary-color);">傳送文字效果預覽：</div>
                 <div class="text-preview" id="textPreview"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- 底部：全功能學員名冊看板後台 -->
+    <div class="card" style="margin-top: 25px; border-top: 4px solid var(--secondary-color);">
+        <div class="card-title">
+            <span>📊 已暫存學員名冊管理後台</span>
+            <button class="btn-mini" style="background: var(--secondary-color); color: white; border: none; padding: 6px 12px;" onclick="exportToExcelCSV()">📥 匯出學員名冊 Excel 總表</button>
+        </div>
+        <div style="overflow-x: auto;">
+            <table style="margin-top: 10px; font-size: 13px;">
+                <thead>
+                    <tr style="background: #edf2f7;">
+                        <th>學生姓名</th>
+                        <th>身分</th>
+                        <th>體驗課</th>
+                        <th>體驗課便當</th>
+                        <th>常規選課摘要</th>
+                        <th>便當總數</th>
+                        <th>總計費用</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="recordsTableBody">
+                    <!-- 暫存名冊資料將渲染在此 -->
+                </tbody>
+            </table>
+        </div>
+        <div style="text-align: right; margin-top: 10px;">
+            <button class="btn-mini" style="border-color:#e53e3e; color:#e53e3e;" onclick="clearAllRecords()">⚠️ 一鍵清空名冊</button>
         </div>
     </div>
 </div>
@@ -494,7 +539,6 @@
         tbody.appendChild(tr);
     });
 
-    // 體驗課程下拉選單防呆鎖
     function handleExperienceChange() {
         const expValue = document.getElementById('experienceCourse').value;
         const expLunchCheck = document.getElementById('lunch_exp');
@@ -535,13 +579,11 @@
     }
 
     function batchSelectLunch(checked) {
-        // 常規梯次便當全選/全消
         document.querySelectorAll('.lunch-checkbox').forEach(cb => {
             if (!cb.disabled) {
                 cb.checked = checked;
             }
         });
-        // 體驗課程便當同步連動
         const expLunchCheck = document.getElementById('lunch_exp');
         if (!expLunchCheck.disabled) {
             expLunchCheck.checked = checked;
@@ -589,7 +631,6 @@
         let fullList = [];
         let lunchList = [];
 
-        // 1. 體驗課學費計算
         let expFee = 0;
         let expText = '';
         if (expValue === 'half') {
@@ -603,7 +644,6 @@
         }
         courseTotal += expFee;
 
-        // 2. 常規梯次選課收集
         sessions.forEach(s => {
             const select = document.querySelector(`.session-select[data-id="${s.id}"]`);
             const lunchCheck = document.getElementById(`lunch_${s.id}`);
@@ -622,7 +662,6 @@
             }
         });
 
-        // 3. 體驗課便當費用計算
         let expLunchFee = 0;
         if (expLunchChecked && expValue !== 'none') {
             expLunchFee = 255;
@@ -630,7 +669,6 @@
             detailsHtml += `<div class="bill-item"><span>7/1~7/3 體驗課程代訂便當 (3天)</span><span>$255</span></div>`;
         }
 
-        // 組合輸出名目說明陣列
         let simplifiedDetails = [];
         if (expText) simplifiedDetails.push(expText);
         if (expLunchFee > 0) simplifiedDetails.push(`7/1~7/3 體驗課程代訂便當：$255`);
@@ -655,7 +693,6 @@
             detailsHtml += `<div class="bill-item"><span>常規代訂便當小計 (${lunchList.length}梯)</span><span>$${lunchTotal - expLunchFee}</span></div>`;
         }
 
-        // 多梯滿額折抵優惠計算
         const equivalentFullSessions = fullList.length + Math.floor(halfList.length / 2);
         let multiSessionDiscount = 0;
         let bonuses = [];
@@ -676,13 +713,12 @@
             multiSessionDiscount = 200;
         }
 
-        // 滿額加贈 7/1~7/3 體驗課程減免處理
         if (freeExpGifted) {
             if (expFee > 0) {
                 multiSessionDiscount += expFee; 
                 bonuses.unshift("滿額福利：符合資格！免收 7/1~7/3 體驗課程費用");
             } else {
-                bonuses.unshift("滿額福利：符合資格！加贈 7/1~7/3 體驗課程免費 (上課前可直接向教練加選)");
+                bonuses.unshift("滿額福利：符合資格！加贈 7/1~7/3 體驗課程免費 (上課前可向教練加選)");
             }
         }
 
@@ -690,7 +726,6 @@
             detailsHtml += `<div class="bill-item discount"><span>滿額多梯優惠折抵</span><span>-$${multiSessionDiscount}</span></div>`;
         }
 
-        // 球隊 85 折大優惠
         let teamDiscount = 0;
         let subtotalAfterMulti = Math.max(0, courseTotal - multiSessionDiscount);
         if (isTeamMember && fullList.length === 8) {
@@ -707,7 +742,6 @@
         document.getElementById('billDetails').innerHTML = detailsHtml || '<div style="color:#aaa; text-align:center; padding:10px;">未勾選任何項目</div>';
         document.getElementById('totalPrice').innerText = `NT$ ${finalTotal.toLocaleString()}`;
 
-        // 組合純文字通知範本
         const bankCode = document.getElementById('bankCode').value;
         const bankUser = document.getElementById('bankUser').value;
         const bankAccount = document.getElementById('bankAccount').value;
@@ -751,7 +785,6 @@
 `;
         txt += `   戶名：${bankUser}
 `;
-        ctx_bank_code = bankCode; 
         txt += `   銀行代碼：${bankCode}
 `;
         txt += `   帳號：${bankAccount}
@@ -767,10 +800,16 @@
 
 感謝您的支持與參加 ❤️`;
 
+
         document.getElementById('textPreview').innerText = txt;
 
         globalCalculatedData = {
             name: name,
+            isTeam: isTeamMember ? '桌球隊' : '一般生',
+            expType: expValue === 'none' ? '不參加' : (expValue === 'half' ? '半天班' : '全天班'),
+            expLunch: expLunchChecked ? '有訂便當' : '無',
+            summarySessions: (halfList.length > 0 ? compressSessions(halfList)+'(半)' : '') + (fullList.length > 0 ? ' ' + compressSessions(fullList)+'(全)' : '') || '無',
+            lunchCount: lunchList.length,
             simplifiedLines: simplifiedDetails,
             multiDiscount: multiSessionDiscount,
             teamDiscount: teamDiscount,
@@ -781,6 +820,114 @@
             bankAccount: bankAccount,
             earlyBird: earlyBird
         };
+    }
+
+    // 核心資料庫暫存儲存機制
+    function saveCurrentRecordToStorage() {
+        if (!document.getElementById('enableAutoRecord').checked) return;
+        
+        let records = JSON.parse(localStorage.getItem('tableTennisCampRecords') || '[]');
+        const d = globalCalculatedData;
+        
+        // 如果名字重複則覆蓋，不重複則新增
+        const index = records.findIndex(r => r.name === d.name);
+        const recordData = {
+            name: d.name,
+            isTeam: d.isTeam,
+            expType: d.expType,
+            expLunch: d.expLunch,
+            summarySessions: d.summarySessions,
+            lunchCount: d.lunchCount,
+            total: d.total
+        };
+
+        if (index > -1) {
+            records[index] = recordData;
+        } else {
+            records.push(recordData);
+        }
+
+        localStorage.setItem('tableTennisCampRecords', JSON.stringify(records));
+        renderRecordsTable();
+    }
+
+    function renderRecordsTable() {
+        let records = JSON.parse(localStorage.getItem('tableTennisCampRecords') || '[]');
+        const tbody = document.getElementById('recordsTableBody');
+        tbody.innerHTML = '';
+
+        if (records.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" style="color:#aaa; text-align:center; padding:15px;">目前名冊內暫無學員資料</td></tr>`;
+            return;
+        }
+
+        records.forEach((r, idx) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight:bold; color:var(--primary-color);">${r.name}</td>
+                <td><span style="font-size:12px; padding:2px 6px; border-radius:4px; background:${r.isTeam==='桌球隊'?'#fef3c7':'#edf2f7'}; color:${r.isTeam==='桌球隊'?'#92400e':'#4a5568'};">${r.isTeam}</span></td>
+                <td>${r.expType}</td>
+                <td>${r.expLunch}</td>
+                <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${r.summarySessions}</td>
+                <td>${r.lunchCount} 梯</td>
+                <td style="font-weight:bold; color:var(--accent-color);">$${r.total.toLocaleString()}</td>
+                <td><button class="btn-mini" style="color:#e53e3e; border-color:#fed7d7; background:#fff5f5;" onclick="deleteRecord(${idx})">❌ 刪除</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function deleteRecord(idx) {
+        let records = JSON.parse(localStorage.getItem('tableTennisCampRecords') || '[]');
+        records.splice(idx, 1);
+        localStorage.setItem('tableTennisCampRecords', JSON.stringify(records));
+        renderRecordsTable();
+        showToast('❌ 已從名冊中移除該學員');
+    }
+
+    function clearAllRecords() {
+        if (confirm('⚠️ 您確定要清空後台所有的學員名冊紀錄嗎？此動作無法復原。')) {
+            localStorage.removeItem('tableTennisCampRecords');
+            renderRecordsTable();
+            showToast('⚠️ 名冊已全數清空');
+        }
+    }
+
+    // 完美 CSV 匯出功能 (包含 BOM 碼防止 Excel 中文亂碼)
+    function exportToExcelCSV() {
+        let records = JSON.parse(localStorage.getItem('tableTennisCampRecords') || '[]');
+        if (records.length === 0) {
+            alert('目前名冊內尚無任何學員資料可以匯出喔！');
+            return;
+        }
+
+        let csvContent = "﻿"; // 強制添加 UTF-8 BOM 碼防止 Excel 打開時變亂碼
+        csvContent += "學生姓名,身分,7/1~7/3體驗課程,體驗課代訂便當,常規選課摘要,常規便當總數,總計應繳費用\n";
+
+        records.forEach(r => {
+            csvContent += `"${r.name}","${r.isTeam}","${r.expType}","${r.expLunch}","${r.summarySessions}","${r.lunchCount}梯次",${r.total}\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `115年桌球夏令營學員報名總表_${new Date().toISOString().slice(0,10)}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('📊 Excel總表 (CSV) 已成功下載！');
+    }
+
+    function triggerCopyAction() {
+        copyNotificationText();
+        saveCurrentRecordToStorage();
+    }
+
+    function triggerImageAction() {
+        generateAndShowImage();
+        saveCurrentRecordToStorage();
     }
 
     function showToast(msg) {
@@ -799,24 +946,21 @@
         });
     }
 
-    // 畫布高度動態完全自適應 & 渲染導出
+    // Canvas 高畫質無裁切繪製邏輯
     function generateAndShowImage() {
         const canvas = document.getElementById('downloadCanvas');
         const ctx = canvas.getContext('2d');
         const d = globalCalculatedData;
 
-        // 精準動態量測高度，完美解決 iPhone 截斷死角
         let baseHeight = 560;
         let linesCount = d.simplifiedLines.length;
         let bonusCount = d.bonuses.length;
         let computedHeight = baseHeight + (linesCount * 32) + (bonusCount * 28);
         canvas.height = Math.max(950, computedHeight);
 
-        // 填滿底色
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // 頂部大 Banner
         ctx.fillStyle = '#1e3d59';
         ctx.fillRect(0, 0, canvas.width, 115);
 
@@ -829,7 +973,6 @@
         ctx.fillStyle = '#eef2f5';
         ctx.fillText('— 學生報名費用明細與繳費通知單 —', canvas.width / 2, 85);
 
-        // 家長姓名抬頭
         ctx.textAlign = 'left';
         ctx.fillStyle = '#111111';
         ctx.font = 'bold 18px sans-serif';
@@ -859,7 +1002,6 @@
             });
         }
 
-        // 折抵及獎勵好禮專區
         if (d.multiDiscount > 0 || d.teamDiscount > 0 || d.bonuses.length > 0) {
             currentY += 35;
             ctx.strokeStyle = '#e2e8f0';
@@ -907,7 +1049,6 @@
         ctx.textAlign = 'right';
         ctx.fillText(`$${d.total.toLocaleString()} 元`, 605, currentY + 4);
 
-        // 匯款帳號包覆框
         ctx.textAlign = 'left';
         currentY += 35;
         ctx.fillStyle = '#f8fafc';
@@ -926,7 +1067,6 @@
         ctx.fillText(`               帳號: ${d.bankAccount} (請務必註明學生姓名)`, 60, currentY + 84);
         ctx.fillText('✅ 現金繳費 — 請直接至學校活動中心 3 樓桌球教室繳交給教練', 60, currentY + 114);
 
-        // 底部提醒
         currentY += 185;
         ctx.fillStyle = '#ff6f3c';
         ctx.font = 'bold 13px sans-serif';
@@ -936,12 +1076,10 @@
         ctx.font = '12px sans-serif';
         ctx.fillText('感謝您的支持與參加，讓我們一同陪伴孩子度過充滿活力又充實的暑假！ ❤️', 45, currentY + 26);
 
-        // 轉換格式導出
         const imgUrl = canvas.toDataURL('image/png');
         document.getElementById('resultImage').src = imgUrl;
         document.getElementById('imageModal').style.display = 'flex';
 
-        // 電腦端直接下載綁定
         document.getElementById('pcDownloadBtn').onclick = function() {
             const link = document.createElement('a');
             link.download = `${d.name}_桌球夏令營費用明細單.png`;
@@ -954,7 +1092,8 @@
         document.getElementById('imageModal').style.display = 'none';
     }
 
-    // 初始呼叫更新
+    // 頁面加載時自動載入已有名冊
+    renderRecordsTable();
     calculateFee();
 </script>
 
