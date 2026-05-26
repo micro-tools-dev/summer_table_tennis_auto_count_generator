@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>115年管嶼國小桌球夏令營 - 費用計算機 V18</title>
+    <title>115年管嶼國小桌球夏令營 - 費用計算機 V19</title>
     <style>
         :root {
             --primary-color: #1e3d59;
@@ -266,7 +266,7 @@
         .modal-img-container {
             margin: 15px 0;
             border: 1px solid #ddd;
-            background: #fcfcfc;
+            background: #fcf8f2;
             padding: 5px;
             border-radius: 6px;
         }
@@ -339,7 +339,7 @@
 <div class="container">
     <header>
         <h1>115年管嶼國小桌球夏令營</h1>
-        <p style="opacity: 0.9; font-size: 14px; margin-top: 5px;">費用計算機 & 智慧暫存名冊系統 V18</p>
+        <p style="opacity: 0.9; font-size: 14px; margin-top: 5px;">費用計算機 & 智慧暫存名冊系統 V19</p>
     </header>
 
     <div class="grid">
@@ -633,14 +633,12 @@
         return result.join('、');
     }
 
-    // 【V18 超級修正】完美重構多重及不連續梯次之高寬容解析引擎
     function parseSummaryToSnapshot(summary) {
         let snapshot = {};
         sessions.forEach(s => { snapshot[s.id] = { type: 'none', lunch: false }; });
         
         if(!summary || summary === '無' || summary.trim() === '') return snapshot;
         
-        // 依照「、」或是空白先將字串分開處理
         let segments = summary.split(/[、\s]+/);
         
         segments.forEach(seg => {
@@ -652,10 +650,8 @@
             if(!isHalf && !isFull) return;
             
             let targetType = isHalf ? 'half' : 'full';
-            // 取出括號前的梯次主體文字
             let cleanSeg = seg.replace(/\(半\)|\(全\)/g, '').trim();
             
-            // 處理如 A~C 或是 A 這種子項
             let subItems = cleanSeg.split('、');
             subItems.forEach(sub => {
                 if(sub.includes('~')) {
@@ -911,7 +907,7 @@
         document.getElementById('stat_gifts_summary').innerHTML = `🧦 運動襪總計：<b>${totalSocks}</b> 雙<br>🥎 比賽球總計：<b>${totalBalls}</b> 盒<br>🎒 專屬後背包：<b>${totalBags}</b> 個<br>🆓 免收體驗費：<b>${totalFreeExp}</b> 人次`;
     }
 
-    // 【全新重配】V18 智慧分流檔案解析與鏡像同步核心
+    // 【全新的 CSV 解析與匯入】相容各種文字包裹與編碼
     function handleCsvFileImport(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -1012,82 +1008,52 @@
             localStorage.setItem('tableTennisCampRecords', JSON.stringify(existing));
             renderRecordsTable();
             calculateFee();
-            showToast(`🎉 成功相容並雙向對齊導入共 ${importedCount} 筆學員總表資料！`);
+            showToast(`🎉 成功從 Excel CSV 檔案匯入 ${importedCount} 筆學員資料！`);
             event.target.value = ''; 
         };
         reader.readAsArrayBuffer(file);
     }
 
-    // 【一鍵編輯完美帶回】反向重構表單打勾與下拉選單狀態
     function loadRecordToForm(idx) {
         let records = JSON.parse(localStorage.getItem('tableTennisCampRecords') || '[]');
         if(!records[idx]) return;
         const r = records[idx];
         
         document.getElementById('studentName').value = r.name;
-        document.getElementById('isTeamMember').checked = (r.isTeamRaw === true || r.isTeam === '桌球隊');
+        document.getElementById('isTeamMember').checked = r.isTeamRaw === true;
         if(r.earlyBird) document.getElementById('earlyBirdDate').value = r.earlyBird;
-        
-        let expVal = 'none';
-        if(r.expType === 'half' || r.expType === '半天班') expVal = 'half';
-        if(r.expType === 'full' || r.expType === '全天班') expVal = 'full';
-        document.getElementById('experienceCourse').value = expVal;
+        document.getElementById('experienceCourse').value = r.expType || 'none';
         
         const expLunchCheck = document.getElementById('lunch_exp');
-        if (expVal === 'none') {
+        if (r.expType === 'none') {
             expLunchCheck.checked = false;
             expLunchCheck.disabled = true;
         } else {
             expLunchCheck.disabled = false;
-            expLunchCheck.checked = (r.expLunch === true || r.expLunch === '有' || r.expLunch === '有訂便當');
+            expLunchCheck.checked = r.expLunch === true;
         }
 
-        // 使用修復後高精準 parse 邏輯重構 A~H 梯選單與打勾狀態
-        let computedSnapshot = r.snapshot;
-        if(!computedSnapshot && r.summarySessions) {
-            computedSnapshot = parseSummaryToSnapshot(r.summarySessions);
-        }
-
-        sessions.forEach(s => {
-            const selectEl = document.querySelector(`.session-select[data-id="${s.id}"]`);
-            const lunchCheckEl = document.getElementById(`lunch_${s.id}`);
-            
-            if (selectEl) selectEl.value = 'none';
-            if (lunchCheckEl) { lunchCheckEl.checked = false; lunchCheckEl.disabled = true; }
-
-            if(computedSnapshot && computedSnapshot[s.id]) {
-                let sType = computedSnapshot[s.id].type || 'none';
-                if(selectEl) selectEl.value = sType;
-                
-                if(lunchCheckEl && sType !== 'none') {
-                    lunchCheckEl.disabled = false;
-                    lunchCheckEl.checked = (computedSnapshot[s.id].lunch === true);
-                }
-            }
-        });
-
-        // 假如有傳入具體便當總數，且打勾沒亮，則按已選常規課的前面梯次補打勾
-        if(r.lunchCount > 0) {
-            let currentTicks = 0;
+        if(r.snapshot) {
             sessions.forEach(s => {
-                const lunchCheckEl = document.getElementById(`lunch_${s.id}`);
-                if(lunchCheckEl && !lunchCheckEl.disabled && lunchCheckEl.checked) currentTicks++;
-            });
-            if(currentTicks === 0) {
-                let needToTick = r.lunchCount;
-                sessions.forEach(s => {
-                    const lunchCheckEl = document.getElementById(`lunch_${s.id}`);
-                    if(lunchCheckEl && !lunchCheckEl.disabled && needToTick > 0) {
-                        lunchCheckEl.checked = true;
-                        needToTick--;
+                if(r.snapshot[s.id]) {
+                    const select = document.querySelector(`.session-select[data-id="${s.id}"]`);
+                    const lunchCheck = document.getElementById(`lunch_${s.id}`);
+                    if (select) select.value = r.snapshot[s.id].type || 'none';
+                    if (lunchCheck) {
+                        if (r.snapshot[s.id].type === 'none') {
+                            lunchCheck.checked = false;
+                            lunchCheck.disabled = true;
+                        } else {
+                            lunchCheck.disabled = false;
+                            lunchCheck.checked = r.snapshot[s.id].lunch === true;
+                        }
                     }
-                });
-            }
+                }
+            });
         }
-
         calculateFee();
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        showToast(`📬 已 100% 完整還原 ${r.name} 的選課與便當打勾狀態！`);
+        showToast(`已成功反向回溯 ${r.name} 的完整選課狀態！`);
     }
 
     function deleteRecord(idx) {
@@ -1129,31 +1095,22 @@
         } catch (e) { alert('匯入失敗，格式有誤。'); }
     }
 
-    // 【欄位完全鏡像匯出】將所有對帳、贈品欄位按照表格順序完全同步導出
     function exportToExcelCSV() {
         let records = JSON.parse(localStorage.getItem('tableTennisCampRecords') || '[]');
         if (records.length === 0) { alert('尚無資料可以匯出。'); return; }
         
-        let csvContent = "\uFEFF序號,學生姓名,身分,7/1~7/3體驗課程,體驗課代訂便當,常規選課摘要,常規便當總數,個人獲得贈品明細,總計費用(含餐費),純學費(不含餐費)\n";
+        let csvContent = "\uFEFF序號,學生姓名,身分,7/1~7/3體驗課程,體驗課代訂便當,常規選課摘要,常規便當總數,總計費用(含餐費),純學費(不含餐費)\n";
         
         records.forEach((r, idx) => {
-            let personalGifts = [];
-            if (parseInt(r.freeExpCount) > 0) personalGifts.push("免體驗費");
-            if (parseInt(r.socks) > 0) personalGifts.push("運動襪");
-            if (parseInt(r.balls) > 0) personalGifts.push("比賽球");
-            if (parseInt(r.bags) > 0) personalGifts.push("後背包");
-            let giftsText = personalGifts.join(' + ') || "—";
-
             let expText = r.expType === 'none' ? '不參加' : (r.expType==='half'?'半天班':'全天班');
             let expLunchText = r.expLunch ? '有訂便當' : '無';
-
-            csvContent += `"${idx+1}","${r.name}","${r.isTeam}","${expText}","${expLunchText}","${r.summarySessions}","${r.lunchCount}梯次","${giftsText}",${r.total},${r.pureTuition}\n`;
+            csvContent += `"${idx+1}","${r.name}","${r.isTeam}","${expText}","${expLunchText}","${r.summarySessions}","${r.lunchCount}梯次",${r.total},${r.pureTuition}\n`;
         });
         
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `115年桌球夏令營學員報名總表_V18_${new Date().toISOString().slice(0,10)}.csv`);
+        link.setAttribute("download", `115年桌球夏令營學員報名總表_V17_${new Date().toISOString().slice(0,10)}.csv`);
         link.click();
     }
 
@@ -1173,32 +1130,49 @@
 
     function closeModal() { document.getElementById('imageModal').style.display = 'none'; }
 
+    // 【全新重配】V19 徹底修復圖片生成時的佈局錯位與空白斷層
     function generateAndShowImage() {
         const canvas = document.getElementById('downloadCanvas');
         const ctx = canvas.getContext('2d');
         const d = globalCalculatedData;
 
-        let baseHeight = 560;
-        let linesCount = d.simplifiedLines.length;
-        let bonusCount = d.bonuses.length;
-        canvas.height = Math.max(950, baseHeight + (linesCount * 32) + (bonusCount * 28));
+        // 【修正核心】將所有高度單位和佈局基準重新對齊
+        let headerHeight = 115; // 藍色頁首
+        let currentY = headerHeight + 35; // 姓名開始處
 
+        // 重新設計動態高度計算邏輯
+        let courseLinesCount = d.simplifiedLines.length > 0 ? d.simplifiedLines.length : 1;
+        let bonusLinesCount = d.bonuses.length;
+
+        // 計算 Canvas 的正確總高度
+        let estimatedCanvasHeight = headerHeight + 60 + // 頁首 + 姓名標題
+                                   40 + // 明細標題
+                                   (courseLinesCount * 32) + 20 + // 明細行 + 明細與優惠分隔間距
+                                   (bonusLinesCount * 28) + (bonusLinesCount > 0 ? 15 : 0) + // 優惠行 + 優惠與金額分隔間距
+                                   45 + // 金額欄
+                                   160 + // 繳費說明
+                                   40; // 提醒與感謝
+        
+        canvas.height = Math.max(950, estimatedCanvasHeight);
+
+        // 步驟 1：重新刷白整個 Canvas
         ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#1e3d59'; ctx.fillRect(0, 0, canvas.width, 115);
-
+        
+        // 步驟 2：繪製固定頁首
+        ctx.fillStyle = '#1e3d59'; ctx.fillRect(0, 0, canvas.width, headerHeight);
         ctx.fillStyle = '#ffffff'; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center';
         ctx.fillText('115年 管嶼國小桌球夏令營', canvas.width / 2, 50);
         ctx.font = '14px sans-serif'; ctx.fillStyle = '#eef2f5';
         ctx.fillText('— 學生報名費用明細與繳費通知單 —', canvas.width / 2, 85);
 
+        // 步驟 3：繪製學員姓名
         ctx.textAlign = 'left'; ctx.fillStyle = '#111111'; ctx.font = 'bold 18px sans-serif';
-        ctx.fillText(`${d.name} 家長您好：`, 45, 155);
+        ctx.fillText(`${d.name} 家長您好：`, 45, currentY);
+        currentY += 18; ctx.strokeStyle = '#cbd5e0'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(45, currentY); ctx.lineTo(605, currentY); ctx.stroke();
 
-        ctx.strokeStyle = '#cbd5e0'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(45, 175); ctx.lineTo(605, 175); ctx.stroke();
-
-        let currentY = 210;
-        ctx.fillStyle = '#1e3d59'; ctx.font = 'bold 16px sans-serif';
+        // 步驟 4：繪製選課明細
+        currentY += 35; ctx.fillStyle = '#1e3d59'; ctx.font = 'bold 16px sans-serif';
         ctx.fillText('🏓 夏令營選課與代訂費用明細', 45, currentY);
         currentY += 15; ctx.font = '14px sans-serif'; ctx.fillStyle = '#333333';
         
@@ -1208,8 +1182,10 @@
             d.simplifiedLines.forEach(line => { currentY += 32; ctx.fillText(`🏓 ${line}`, 60, currentY); });
         }
 
+        // 步驟 5：繪製滿額優惠與福利
         if (d.multiDiscount > 0 || d.teamDiscount > 0 || d.bonuses.length > 0) {
-            currentY += 35; ctx.strokeStyle = '#e2e8f0'; ctx.beginPath(); ctx.moveTo(45, currentY - 15); ctx.lineTo(605, currentY - 15); ctx.stroke();
+            currentY += 20; // 與明細分隔間距
+            ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(45, currentY - 10); ctx.lineTo(605, currentY - 10); ctx.stroke();
             if (d.multiDiscount > 0) { ctx.fillStyle = '#e53e3e'; ctx.font = 'bold 15px sans-serif'; ctx.fillText(`🉐 滿額多梯優惠折抵: -$${d.multiDiscount.toLocaleString()}`, 60, currentY); currentY += 28; }
             if (d.teamDiscount > 0) { ctx.fillStyle = '#e53e3e'; ctx.font = 'bold 15px sans-serif'; ctx.fillText(`🏆 桌球隊專屬優惠 (常規8全打85折): -$${d.teamDiscount.toLocaleString()}`, 60, currentY); currentY += 28; }
             if (d.bonuses.length > 0) {
@@ -1218,22 +1194,26 @@
             }
         }
 
-        currentY += 30; ctx.strokeStyle = '#1e3d59'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(45, currentY); ctx.lineTo(605, currentY); ctx.stroke();
-        currentY += 42; ctx.fillStyle = '#1e3d59'; ctx.font = 'bold 18px sans-serif';
-        ctx.fillText('💰 總計應繳金額：', 45, currentY);
+        // 步驟 6：繪製總計金額
+        currentY += 20; // 分隔間距
+        ctx.strokeStyle = '#1e3d59'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(45, currentY); ctx.lineTo(605, currentY); ctx.stroke();
+        currentY += 42; ctx.fillStyle = '#1e3d59'; ctx.font = 'bold 18px sans-serif'; ctx.fillText('💰 總計應繳金額：', 45, currentY);
         ctx.fillStyle = '#ff6f3c'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(`$${d.total.toLocaleString()} 元`, 605, currentY + 4);
 
-        ctx.textAlign = 'left'; currentY += 35; ctx.fillStyle = '#f8fafc'; ctx.fillRect(45, 45, 560, 140); ctx.strokeStyle = '#cbd5e0'; ctx.lineWidth = 1; ctx.strokeRect(45, currentY, 560, 140);
+        // 步驟 7：繪製繳費方式
+        ctx.textAlign = 'left'; currentY += 35; ctx.fillStyle = '#fcf8f2'; ctx.fillRect(45, currentY, 560, 140); ctx.strokeStyle = '#cbd5e0'; ctx.lineWidth = 1; ctx.strokeRect(45, currentY, 560, 140);
         ctx.fillStyle = '#1e3d59'; ctx.font = 'bold 15px sans-serif'; ctx.fillText('💳 繳費方式說明（二擇一）', 60, currentY + 30);
         ctx.font = '13px sans-serif'; ctx.fillStyle = '#4a5568';
-        ctx.fillText(`銀行代碼：700  |  戶名: 張嘉芸`, 60, currentY + 80);
-        ctx.fillText(`帳號: 00812990126251 (請務必註明學生姓名)`, 60, currentY + 102);
-        ctx.fillText('✅ 現金繳費 — 請直接至學校活動中心 3 樓桌球教室繳交給教練', 60, currentY + 132);
+        ctx.fillText(`銀行代碼：700  |  戶名: 張嘉芸`, 60, currentY + 62);
+        ctx.fillText(`帳號: 00812990126251 (請務必註明學生姓名)`, 60, currentY + 84);
+        ctx.fillText('✅ 現金繳費 — 請直接至學校活動中心 3 樓桌球教室繳交給教練', 60, currentY + 114);
 
-        currentY += 185; ctx.fillStyle = '#ff6f3c'; ctx.font = 'bold 13px sans-serif';
+        // 步驟 8：繪製底部提醒
+        currentY += 165; ctx.fillStyle = '#ff6f3c'; ctx.font = 'bold 13px sans-serif';
         ctx.fillText(`💡 溫馨提醒：凡於 ${d.earlyBird} 前完成報名繳費者，「早鳥禮物」將於上課第一天贈送唷！`, 45, currentY);
         ctx.fillStyle = '#718096'; ctx.font = '12px sans-serif'; ctx.fillText('感謝您的支持與配合，讓我們陪伴孩子度過充滿活力又充實的暑假！ ❤️', 45, currentY + 26);
 
+        // 產出圖片並顯示
         document.getElementById('resultImage').src = canvas.toDataURL('image/png');
         document.getElementById('imageModal').style.display = 'flex';
         document.getElementById('pcDownloadBtn').onclick = function() {
