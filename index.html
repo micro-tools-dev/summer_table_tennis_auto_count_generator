@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>115年管嶼國小桌球夏令營 - 費用計算機 V19</title>
+    <title>115年管嶼國小桌球夏令營 - 費用計算機 V20</title>
     <style>
         :root {
             --primary-color: #1e3d59;
@@ -86,7 +86,15 @@
             background: #edf2f7;
             padding: 12px 15px;
             border-radius: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+        }
+
+        .addon-section {
+            background: #f7fafc;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            border: 1px solid #e2e8f0;
         }
 
         .checkbox-container {
@@ -339,7 +347,7 @@
 <div class="container">
     <header>
         <h1>115年管嶼國小桌球夏令營</h1>
-        <p style="opacity: 0.9; font-size: 14px; margin-top: 5px;">費用計算機 & 智慧暫存名冊系統 V19</p>
+        <p style="opacity: 0.9; font-size: 14px; margin-top: 5px;">費用計算機 & 智慧暫存名冊系統 V20</p>
     </header>
 
     <div class="grid">
@@ -360,6 +368,12 @@
                     <label class="checkbox-container">
                         <input type="checkbox" id="isTeamMember" onchange="calculateFee()">
                         該學員為「桌球隊成員」（若常規報滿 8 梯全天班享全單再打 85 折）
+                    </label>
+                </div>
+                <div class="addon-section">
+                    <label class="checkbox-container" style="font-size:13px; color:#2d3748;">
+                        <input type="checkbox" id="buyRacket" onchange="calculateFee()">
+                        🏓 <b>代訂專業桌球拍</b>（每支 <b>$850</b> 元，預設不打勾）
                     </label>
                 </div>
             </div>
@@ -391,6 +405,8 @@
                     <button class="btn-mini" onclick="batchSelectSessions('none')">一鍵全部清除</button>
                     <button class="btn-mini" style="border-color: var(--secondary-color); color: var(--secondary-color);" onclick="batchSelectLunch(true)">一鍵全選訂便當</button>
                     <button class="btn-mini" style="border-color: #e53e3e; color: #e53e3e;" onclick="batchSelectLunch(false)">一鍵取消便當</button>
+                    <button class="btn-mini" style="border-color: #805ad5; color: #805ad5;" onclick="batchSelectTutoring(true)">一鍵全選課輔</button>
+                    <button class="btn-mini" style="border-color: #e53e3e; color: #e53e3e;" onclick="batchSelectTutoring(false)">一鍵取消課輔</button>
                 </div>
 
                 <table>
@@ -400,6 +416,7 @@
                             <th>課程日期</th>
                             <th>選擇班別</th>
                             <th>代訂便當 ($425/梯)</th>
+                            <th style="color: #805ad5;">課業輔導 ($800/梯)</th>
                         </tr>
                     </thead>
                     <tbody id="sessionTableBody">
@@ -458,19 +475,19 @@
 
     <div class="card" style="margin-top: 25px; border-top: 4px solid var(--secondary-color);">
         <div class="card-title">
-            <span>📊 已暫存學員名冊管理後台</span>
+            <span>📊 已暫存學員名冊管理後台（含即時贈品與金額大統計）</span>
             <div style="display:flex; gap:8px;">
                 <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="handleCsvFileImport(event)">
                 <button class="btn-mini" style="background: #2c5282; color: white; border: none; padding: 6px 12px;" onclick="document.getElementById('csvFileInput').click()">📥 直接匯入 Excel 總表 (CSV)</button>
-                <button class="btn-mini" style="background: #4a5568; color: white; border: none; padding: 6px 12px;" onclick="copyBackupString()">🧩 複製 JSON 備份字串</button>
-                <button class="btn-mini" style="background: #3182ce; color: white; border: none; padding: 6px 12px;" onclick="importBackupPrompt()">📥 貼上 JSON 還原</button>
-                <button class="btn-mini" style="background: var(--secondary-color); color: white; border: none; padding: 6px 12px;" onclick="exportToExcelCSV()">📤 匯出 Excel 對帳總表 (CSV)</button>
+                <button class="btn-mini" style="background: #4a5568; color: white; border: none; padding: 6px 12px;" onclick="copyBackupString()">🧩 複製名冊備份字串</button>
+                <button class="btn-mini" style="background: #3182ce; color: white; border: none; padding: 6px 12px;" onclick="importBackupPrompt()">📥 匯入名冊備份</button>
+                <button class="btn-mini" style="background: var(--secondary-color); color: white; border: none; padding: 6px 12px;" onclick="exportToExcelCSV()">📥 匯出 Excel 對帳總表</button>
             </div>
         </div>
         
         <div class="summary-dashboard">
             <div class="stat-box" style="border-left: 4px solid #3182ce;">
-                <div class="label">💰 總應收金額 (含餐費)</div>
+                <div class="label">💰 總應收金額 (含餐費與加購)</div>
                 <div class="val" id="stat_total_with_lunch">$0</div>
             </div>
             <div class="stat-box" style="border-left: 4px solid #319795;">
@@ -481,14 +498,18 @@
                 <div class="label">🍱 總代訂餐費</div>
                 <div class="val" id="stat_total_lunch_only">$0</div>
             </div>
+            <div class="stat-box" style="border-left: 4px solid #805ad5;">
+                <div class="label">🛒 加購統計 (球拍/課輔人次)</div>
+                <div class="val" id="stat_addons_summary" style="font-size:13px; text-align:left; font-weight:normal; line-height:1.45; margin-top:2px;">暫無數據</div>
+            </div>
             <div class="stat-box" style="border-left: 4px solid var(--accent-color);">
-                <div class="label">🎁 贈品叫貨總量累計統計看板</div>
+                <div class="label">🎁 贈品叫貨總量累計統計</div>
                 <div class="val" id="stat_gifts_summary" style="font-size:13px; text-align:left; font-weight:normal; line-height:1.45; margin-top:2px;">暫無數據</div>
             </div>
         </div>
 
         <div style="overflow-x: auto;">
-            <table style="margin-top: 10px; font-size: 13px; min-width: 1250px;">
+            <table style="margin-top: 10px; font-size: 13px; min-width: 1350px;">
                 <thead>
                     <tr style="background: #edf2f7;">
                         <th style="width: 50px;">序號</th>
@@ -498,7 +519,9 @@
                         <th>體驗課餐</th>
                         <th>常規選課摘要</th>
                         <th>便當數</th>
-                        <th style="background: #eef2ff; color: #312e81;">🎁 個人獲得贈品明細</th>
+                        <th style="color:#805ad5;">加購球拍</th>
+                        <th style="color:#805ad5;">課輔摘要</th>
+                        <th>個人獲得贈品明細</th>
                         <th>總計費用</th>
                         <th>純學費</th>
                         <th>操作功能</th>
@@ -527,7 +550,7 @@
     </div>
 </div>
 
-<canvas id="downloadCanvas" width="650" height="1050"></canvas>
+<canvas id="downloadCanvas" width="650" height="1150"></canvas>
 <div class="toast" id="toast">已複製到剪貼簿！</div>
 
 <script>
@@ -542,6 +565,7 @@
         { id: 'H', date: '8/24 ~ 8/28' }
     ];
 
+    // 初始化建置常規梯次表格 DOM
     const sessionTableBody = document.getElementById('sessionTableBody');
     sessions.forEach(s => {
         const tr = document.createElement('tr');
@@ -557,6 +581,9 @@
             </td>
             <td>
                 <input type="checkbox" class="lunch-checkbox" data-id="${s.id}" id="lunch_${s.id}" disabled onchange="calculateFee()" style="width:17px; height:17px; accent-color:var(--accent-color);">
+            </td>
+            <td>
+                <input type="checkbox" class="tutoring-checkbox" data-id="${s.id}" id="tutoring_${s.id}" disabled onchange="calculateFee()" style="width:17px; height:17px; accent-color:#805ad5;">
             </td>
         `;
         sessionTableBody.appendChild(tr);
@@ -577,11 +604,15 @@
     function handleSessionChange(id) {
         const select = document.querySelector(`.session-select[data-id="${id}"]`);
         const lunchCheck = document.getElementById(`lunch_${id}`);
+        const tutoringCheck = document.getElementById(`tutoring_${id}`);
         if (select.value === 'none') {
             lunchCheck.checked = false;
             lunchCheck.disabled = true;
+            tutoringCheck.checked = false;
+            tutoringCheck.disabled = true;
         } else {
             lunchCheck.disabled = false;
+            tutoringCheck.disabled = false;
         }
         calculateFee();
     }
@@ -591,11 +622,15 @@
             select.value = type;
             const id = select.getAttribute('data-id');
             const lunchCheck = document.getElementById(`lunch_${id}`);
+            const tutoringCheck = document.getElementById(`tutoring_${id}`);
             if (type === 'none') {
                 lunchCheck.checked = false;
                 lunchCheck.disabled = true;
+                tutoringCheck.checked = false;
+                tutoringCheck.disabled = true;
             } else {
                 lunchCheck.disabled = false;
+                tutoringCheck.disabled = false;
             }
         });
         calculateFee();
@@ -607,6 +642,14 @@
         });
         const expLunchCheck = document.getElementById('lunch_exp');
         if (!expLunchCheck.disabled) expLunchCheck.checked = checked;
+        calculateFee();
+    }
+
+    // 新增：一鍵全選/取消課輔
+    function batchSelectTutoring(checked) {
+        document.querySelectorAll('.tutoring-checkbox').forEach(cb => {
+            if (!cb.disabled) cb.checked = checked;
+        });
         calculateFee();
     }
 
@@ -633,25 +676,21 @@
         return result.join('、');
     }
 
+    // 將歷史摘要欄位重新還原成 Snapshot 的智慧轉型引擎
     function parseSummaryToSnapshot(summary) {
         let snapshot = {};
-        sessions.forEach(s => { snapshot[s.id] = { type: 'none', lunch: false }; });
-        
+        sessions.forEach(s => { snapshot[s.id] = { type: 'none', lunch: false, tutoring: false }; });
         if(!summary || summary === '無' || summary.trim() === '') return snapshot;
         
         let segments = summary.split(/[、\s]+/);
-        
         segments.forEach(seg => {
-            seg = seg.trim();
-            if(!seg) return;
-            
+            seg = seg.trim(); if(!seg) return;
             let isHalf = seg.includes('(半)');
             let isFull = seg.includes('(全)');
             if(!isHalf && !isFull) return;
             
             let targetType = isHalf ? 'half' : 'full';
             let cleanSeg = seg.replace(/\(半\)|\(全\)/g, '').trim();
-            
             let subItems = cleanSeg.split('、');
             subItems.forEach(sub => {
                 if(sub.includes('~')) {
@@ -683,14 +722,17 @@
         const isTeamMember = document.getElementById('isTeamMember').checked;
         const expValue = document.getElementById('experienceCourse').value;
         const expLunchChecked = document.getElementById('lunch_exp').checked;
+        const buyRacket = document.getElementById('buyRacket').checked;
 
         let detailsHtml = '';
         let courseTotal = 0;
         let lunchTotal = 0;
+        let addonTotal = 0;
         
         let halfList = [];
         let fullList = [];
         let lunchList = [];
+        let tutoringList = [];
 
         let expFee = 0;
         let expText = '';
@@ -708,11 +750,13 @@
         sessions.forEach(s => {
             const select = document.querySelector(`.session-select[data-id="${s.id}"]`);
             const lunchCheck = document.getElementById(`lunch_${s.id}`);
+            const tutoringCheck = document.getElementById(`tutoring_${s.id}`);
             
             if (select && select.value === 'half') { halfList.push(s.id); courseTotal += 1250; }
             else if (select && select.value === 'full') { fullList.push(s.id); courseTotal += 2500; }
 
             if (lunchCheck && !lunchCheck.disabled && lunchCheck.checked) { lunchList.push(s.id); lunchTotal += 425; }
+            if (tutoringCheck && !tutoringCheck.disabled && tutoringCheck.checked) { tutoringList.push(s.id); addonTotal += 800; }
         });
 
         let expLunchFee = 0;
@@ -742,12 +786,25 @@
         if (courseTotal - expFee > 0) detailsHtml += `<div class="bill-item"><span>常規梯次學費總計 (${halfList.length}半 / ${fullList.length}全)</span><span>$${courseTotal - expFee}</span></div>`;
         if (lunchTotal - expLunchFee > 0) detailsHtml += `<div class="bill-item"><span>常規代訂便當小計 (${lunchList.length}梯)</span><span>$${lunchTotal - expLunchFee}</span></div>`;
 
+        // 加購計價明細呈現
+        if (buyRacket) {
+            addonTotal += 850;
+            detailsHtml += `<div class="bill-item" style="color:#805ad5;"><span>加購：代訂專業桌球拍 (1支)</span><span>$850</span></div>`;
+            simplifiedDetails.push(`加購項目：代訂專業桌球拍 = $850`);
+        }
+        if (tutoringList.length > 0) {
+            const compTutoring = compressSessions(tutoringList);
+            detailsHtml += `<div class="bill-item" style="color:#805ad5;"><span>加購：中午課業輔導 (${tutoringList.length}梯)</span><span>$${(tutoringList.length * 800).toLocaleString()}</span></div>`;
+            simplifiedDetails.push(`${compTutoring} 加購中午課業輔導：$800 x ${tutoringList.length}梯次 = $${(tutoringList.length * 800).toLocaleString()}`);
+        }
+
         const equivalentFullSessions = fullList.length + Math.floor(halfList.length / 2);
         let multiSessionDiscount = 0;
         let bonuses = [];
         let freeExpGifted = false;
         let socks = 0, balls = 0, bags = 0, freeExpCount = 0;
 
+        // 精準贈品判斷
         if (equivalentFullSessions >= 8) {
             multiSessionDiscount = 4000;
             freeExpGifted = true;
@@ -763,7 +820,9 @@
             freeExpGifted = true;
             bonuses.push("滿額好禮：運動襪一雙");
             socks = 1;
-        } else if (equivalentFullSessions >= 2) { multiSessionDiscount = 200; }
+        } else if (equivalentFullSessions >= 2) {
+            multiSessionDiscount = 200;
+        }
 
         if (freeExpGifted) {
             freeExpCount = 1;
@@ -784,14 +843,15 @@
             detailsHtml += `<div class="bill-item discount"><span>球隊專屬全天班 85 折大特惠</span><span>-$${teamDiscount}</span></div>`;
         }
 
-        let finalTotal = subtotalAfterMulti - teamDiscount + lunchTotal;
+        let finalTotal = subtotalAfterMulti - teamDiscount + lunchTotal + addonTotal;
         let pureTuition = subtotalAfterMulti - teamDiscount; 
 
         bonuses.forEach(b => { detailsHtml += `<div class="bill-item bonus">${b}</div>`; });
 
-        document.getElementById('totalPrice').innerText = `NT$ ${finalTotal.toLocaleString()}`;
         document.getElementById('billDetails').innerHTML = detailsHtml || '<div style="color:#aaa; text-align:center; padding:10px;">未勾選任何項目</div>';
+        document.getElementById('totalPrice').innerText = `NT$ ${finalTotal.toLocaleString()}`;
 
+        // 動態生成通知文字效果預覽
         const bankCode = document.getElementById('bankCode').value;
         const bankUser = document.getElementById('bankUser').value;
         const bankAccount = document.getElementById('bankAccount').value;
@@ -811,17 +871,22 @@
         sessions.forEach(s => {
             const selectEl = document.querySelector(`.session-select[data-id="${s.id}"]`);
             const lunchCheckEl = document.getElementById(`lunch_${s.id}`);
+            const tutoringCheckEl = document.getElementById(`tutoring_${s.id}`);
+            
             let selectVal = selectEl ? selectEl.value : 'none';
             let lunchChecked = lunchCheckEl ? lunchCheckEl.checked : false;
-            fullSessionSnapshot[s.id] = { type: selectVal, lunch: lunchChecked };
+            let tutoringChecked = tutoringCheckEl ? tutoringCheckEl.checked : false;
+            fullSessionSnapshot[s.id] = { type: selectVal, lunch: lunchChecked, tutoring: tutoringChecked };
         });
 
         let summaryText = (halfList.length > 0 ? compressSessions(halfList)+'(半)' : '') + (fullList.length > 0 ? (halfList.length > 0 ? '、' : '') + compressSessions(fullList)+'(全)' : '');
+        let tutoringSummary = tutoringList.length > 0 ? compressSessions(tutoringList) : '無';
 
         globalCalculatedData = {
             name: name, isTeam: isTeamMember ? '桌球隊' : '一般生', isTeamRaw: isTeamMember,
             expType: expValue, expLunch: expLunchChecked, summarySessions: summaryText || '無',
-            lunchCount: lunchList.length, simplifiedLines: simplifiedDetails, multiDiscount: multiSessionDiscount, teamDiscount: teamDiscount, bonuses: bonuses,
+            lunchCount: lunchList.length, buyRacket: buyRacket, tutoringSummary: tutoringSummary, tutoringCount: tutoringList.length,
+            simplifiedLines: simplifiedDetails, multiDiscount: multiSessionDiscount, teamDiscount: teamDiscount, bonuses: bonuses,
             total: finalTotal, pureTuition: pureTuition, lunchTotal: lunchTotal, earlyBird: earlyBird, socks: socks, balls: balls, bags: bags, freeExpCount: freeExpCount, snapshot: fullSessionSnapshot
         };
     }
@@ -834,10 +899,11 @@
         
         const recordData = {
             name: d.name, isTeam: d.isTeam, isTeamRaw: d.isTeamRaw, expType: d.expType, expLunch: d.expLunch, summarySessions: d.summarySessions,
-            lunchCount: parseInt(d.lunchCount) || 0, total: parseFloat(d.total) || 0, pureTuition: parseFloat(d.pureTuition) || 0, lunchTotal: parseFloat(d.lunchTotal) || 0,
-            earlyBird: d.earlyBird, socks: parseInt(d.socks) || 0, balls: parseInt(d.balls) || 0, bags: parseInt(d.bags) || 0, freeExpCount: parseInt(d.freeExpCount) || 0, snapshot: d.snapshot
+            lunchCount: parseInt(d.lunchCount) || 0, buyRacket: d.buyRacket, tutoringSummary: d.tutoringSummary, tutoringCount: parseInt(d.tutoringCount) || 0,
+            total: parseFloat(d.total) || 0, pureTuition: parseFloat(d.pureTuition) || 0, lunchTotal: parseFloat(d.lunchTotal) || 0, earlyBird: d.earlyBird, 
+            socks: parseInt(d.socks) || 0, balls: parseInt(d.balls) || 0, bags: parseInt(d.bags) || 0, freeExpCount: parseInt(d.freeExpCount) || 0, snapshot: d.snapshot
         };
-
+        
         if (index > -1) records[index] = recordData; else records.push(recordData);
         localStorage.setItem('tableTennisCampRecords', JSON.stringify(records));
         renderRecordsTable();
@@ -850,12 +916,14 @@
 
         let sumWithLunch = 0, sumNoLunch = 0, sumLunchOnly = 0;
         let totalSocks = 0, totalBalls = 0, totalBags = 0, totalFreeExp = 0;
+        let totalRackets = 0, totalTutoringCount = 0;
 
         if (records.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="11" style="color:#aaa; text-align:center; padding:15px;">目前名冊內暫無學員資料</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="13" style="color:#aaa; text-align:center; padding:15px;">目前名冊內暫無學員資料</td></tr>`;
             document.getElementById('stat_total_with_lunch').innerText = '$0';
             document.getElementById('stat_total_no_lunch').innerText = '$0';
             document.getElementById('stat_total_lunch_only').innerText = '$0';
+            document.getElementById('stat_addons_summary').innerHTML = '暫無數據';
             document.getElementById('stat_gifts_summary').innerHTML = '暫無數據';
             return;
         }
@@ -864,15 +932,23 @@
             const t_total = parseFloat(r.total) || 0;
             const t_tuition = (r.pureTuition !== undefined && !isNaN(r.pureTuition)) ? parseFloat(r.pureTuition) : t_total;
             const t_lunch = parseFloat(r.lunchTotal) || 0;
-
-            sumWithLunch += t_total; sumNoLunch += t_tuition; sumLunchOnly += t_lunch;
-
+            
+            sumWithLunch += t_total; 
+            sumNoLunch += t_tuition; 
+            sumLunchOnly += t_lunch;
+            
             const s_socks = parseInt(r.socks) || 0;
             const s_balls = parseInt(r.balls) || 0;
             const s_bags = parseInt(r.bags) || 0;
             const s_freeExp = parseInt(r.freeExpCount) || 0;
 
-            totalSocks += s_socks; totalBalls += s_balls; totalBags += s_bags; totalFreeExp += s_freeExp;
+            totalSocks += s_socks; 
+            totalBalls += s_balls; 
+            totalBags += s_bags; 
+            totalFreeExp += s_freeExp;
+            
+            if(r.buyRacket === true) totalRackets++;
+            totalTutoringCount += parseInt(r.tutoringCount) || 0;
 
             let personalGifts = [];
             if (s_freeExp > 0) personalGifts.push("🆓免體驗費");
@@ -881,16 +957,20 @@
             if (s_bags > 0) personalGifts.push("🎒後背包");
             let personalGiftsText = personalGifts.join(' + ') || "—";
 
+            let tutText = r.tutoringCount > 0 ? `${r.tutoringSummary}(共${r.tutoringCount}梯)` : '—';
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="color:#718096; font-weight:bold;">${idx + 1}</td>
                 <td style="font-weight:bold; color:var(--primary-color);">${r.name}</td>
                 <td><span style="font-size:12px; padding:2px 6px; border-radius:4px; background:${r.isTeam==='桌球隊'?'#fef3c7':'#edf2f7'}; color:${r.isTeam==='桌球隊'?'#92400e':'#4a5568'};">${r.isTeam}</span></td>
-                <td>${r.expType === 'none' || r.expType === '不參加' ? '不參加' : (r.expType === 'half' || r.expType === '半天班' ? '半天班' : '全天班')}</td>
-                <td>${r.expLunch === true || r.expLunch === '有訂便當' || r.expLunch === '有' ? '有' : '無'}</td>
-                <td style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${r.summarySessions}</td>
+                <td>${r.expType === 'none' ? '不參加' : (r.expType === 'half' ? '半天班' : '全天班')}</td>
+                <td>${r.expLunch ? '有' : '無'}</td>
+                <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${r.summarySessions}</td>
                 <td>${r.lunchCount} 梯</td>
-                <td style="font-weight:bold; color:#2b6cb0; font-size:12px; background:#f0f5ff; border-radius:4px;">${personalGiftsText}</td>
+                <td style="font-weight:bold; color:${r.buyRacket?'#805ad5':'#aaa'};">${r.buyRacket?'是 (1支)':'—'}</td>
+                <td style="color:${r.tutoringCount>0?'#805ad5':'#aaa'}; font-weight:${r.tutoringCount>0?'bold':'normal'};">${tutText}</td>
+                <td style="font-weight:bold; color:#2b6cb0; font-size:12px;">${personalGiftsText}</td>
                 <td style="font-weight:bold; color:var(--accent-color);">$${t_total.toLocaleString()}</td>
                 <td style="color:#2b6cb0;">$${t_tuition.toLocaleString()}</td>
                 <td>
@@ -904,114 +984,8 @@
         document.getElementById('stat_total_with_lunch').innerText = `$${sumWithLunch.toLocaleString()}`;
         document.getElementById('stat_total_no_lunch').innerText = `$${sumNoLunch.toLocaleString()}`;
         document.getElementById('stat_total_lunch_only').innerText = `$${sumLunchOnly.toLocaleString()}`;
+        document.getElementById('stat_addons_summary').innerHTML = `🏓 球拍代訂：<b>${totalRackets}</b> 支<br>📝 課輔總量：<b>${totalTutoringCount}</b> 人次梯`;
         document.getElementById('stat_gifts_summary').innerHTML = `🧦 運動襪總計：<b>${totalSocks}</b> 雙<br>🥎 比賽球總計：<b>${totalBalls}</b> 盒<br>🎒 專屬後背包：<b>${totalBags}</b> 個<br>🆓 免收體驗費：<b>${totalFreeExp}</b> 人次`;
-    }
-
-    // 【全新的 CSV 解析與匯入】相容各種文字包裹與編碼
-    function handleCsvFileImport(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const bytes = new Uint8Array(e.target.result);
-            let encoding = 'utf-8';
-            let startIndex = 0;
-            if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
-                startIndex = 3;
-            } else {
-                for (let j = 0; j < Math.min(bytes.length, 500); j++) {
-                    if (bytes[j] > 0x7F && bytes[j] < 0xFF) { encoding = 'big5'; break; }
-                }
-            }
-
-            const textDecoder = new TextDecoder(encoding);
-            const text = textDecoder.decode(bytes.subarray(startIndex));
-            const lines = text.split(/\r?\n/);
-            if (lines.length <= 1) { alert('此 CSV 檔案未包含任何有效的學員紀錄列！'); return; }
-
-            let importedCount = 0;
-            let existing = JSON.parse(localStorage.getItem('tableTennisCampRecords') || '[]');
-
-            for (let i = 1; i < lines.length; i++) {
-                let row = lines[i].trim();
-                if (!row) continue;
-
-                let cells = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                if (cells.length < 7) continue;
-
-                let name = cells[1].replace(/^["']|["']$/g, '').trim();
-                let identity = cells[2].replace(/^["']|["']$/g, '').trim();
-                let expTypeRaw = cells[3].replace(/^["']|["']$/g, '').trim();
-                let expLunchRaw = cells[4].replace(/^["']|["']$/g, '').trim();
-                let summary = cells[5].replace(/^["']|["']$/g, '').trim();
-                let lunchCountRaw = parseInt(cells[6].replace(/[^0-9]/g, '')) || 0;
-
-                if (!name || name === '學生姓名') continue;
-
-                let isTeamRaw = (identity.includes('球隊'));
-                let expType = 'none';
-                if (expTypeRaw.includes('半')) expType = 'half';
-                if (expTypeRaw.includes('全')) expType = 'full';
-                let expLunch = (expLunchRaw.includes('有') || expLunchRaw.includes('訂'));
-
-                // 調用修復後的高寬容解析引擎
-                let snapshot = parseSummaryToSnapshot(summary);
-                
-                let courseTotal = (expType === 'half' ? 500 : (expType === 'full' ? 900 : 0));
-                let lunchTotal = (expLunch ? 255 : 0) + (lunchCountRaw * 425);
-                let halfCount = 0, fullCount = 0;
-
-                Object.keys(snapshot).forEach(k => {
-                    if (snapshot[k].type === 'half') { courseTotal += 1250; halfCount++; }
-                    if (snapshot[k].type === 'full') { courseTotal += 2500; fullCount++; }
-                });
-
-                // 便當勾選數還原分佈
-                let neededLunchCount = lunchCountRaw;
-                Object.keys(snapshot).forEach(k => {
-                    if (snapshot[k].type !== 'none' && neededLunchCount > 0) {
-                        snapshot[k].lunch = true;
-                        neededLunchCount--;
-                    }
-                });
-
-                const equiv = fullCount + Math.floor(halfCount / 2);
-                let multiDiscount = 0, socks = 0, balls = 0, bags = 0, freeExp = 0;
-                if (equiv >= 8) { multiDiscount = 4000; socks = 1; balls = 1; bags = 1; freeExp = 1; }
-                else if (equiv >= 6) { multiDiscount = 2200; balls = 1; freeExp = 1; }
-                else if (equiv >= 4) { multiDiscount = 1000; socks = 1; freeExp = 1; }
-                else if (equiv >= 2) { multiDiscount = 200; }
-
-                if (freeExp && (expType === 'half' || expType === 'full')) {
-                    multiDiscount += (expType === 'half' ? 500 : 900);
-                }
-
-                let teamDiscount = 0;
-                let subAfter = Math.max(0, courseTotal - multiDiscount);
-                if (isTeamRaw && fullCount === 8) { teamDiscount = Math.round(subAfter * 0.15); }
-
-                let total = subAfter - teamDiscount + lunchTotal;
-                let pureTuition = subAfter - teamDiscount;
-
-                const importedRecord = {
-                    name: name, isTeam: isTeamRaw ? '桌球隊' : '一般生', isTeamRaw: isTeamRaw, expType: expType, expLunch: expLunch, summarySessions: summary,
-                    lunchCount: lunchCountRaw, total: total, pureTuition: pureTuition, lunchTotal: lunchTotal, earlyBird: "115/6/17",
-                    socks: socks, balls: balls, bags: bags, freeExpCount: freeExp, snapshot: snapshot
-                };
-
-                let idx = existing.findIndex(e => e.name === name);
-                if (idx > -1) existing[idx] = importedRecord; else existing.push(importedRecord);
-                importedCount++;
-            }
-
-            localStorage.setItem('tableTennisCampRecords', JSON.stringify(existing));
-            renderRecordsTable();
-            calculateFee();
-            showToast(`🎉 成功從 Excel CSV 檔案匯入 ${importedCount} 筆學員資料！`);
-            event.target.value = ''; 
-        };
-        reader.readAsArrayBuffer(file);
     }
 
     function loadRecordToForm(idx) {
@@ -1020,10 +994,11 @@
         const r = records[idx];
         
         document.getElementById('studentName').value = r.name;
-        document.getElementById('isTeamMember').checked = r.isTeamRaw === true;
+        document.getElementById('isTeamMember').checked = (r.isTeamRaw === true || r.isTeam === '桌球隊');
         if(r.earlyBird) document.getElementById('earlyBirdDate').value = r.earlyBird;
-        document.getElementById('experienceCourse').value = r.expType || 'none';
+        document.getElementById('buyRacket').checked = (r.buyRacket === true);
         
+        document.getElementById('experienceCourse').value = r.expType || 'none';
         const expLunchCheck = document.getElementById('lunch_exp');
         if (r.expType === 'none') {
             expLunchCheck.checked = false;
@@ -1033,27 +1008,31 @@
             expLunchCheck.checked = r.expLunch === true;
         }
 
-        if(r.snapshot) {
-            sessions.forEach(s => {
-                if(r.snapshot[s.id]) {
-                    const select = document.querySelector(`.session-select[data-id="${s.id}"]`);
-                    const lunchCheck = document.getElementById(`lunch_${s.id}`);
-                    if (select) select.value = r.snapshot[s.id].type || 'none';
-                    if (lunchCheck) {
-                        if (r.snapshot[s.id].type === 'none') {
-                            lunchCheck.checked = false;
-                            lunchCheck.disabled = true;
-                        } else {
-                            lunchCheck.disabled = false;
-                            lunchCheck.checked = r.snapshot[s.id].lunch === true;
-                        }
-                    }
+        let computedSnapshot = r.snapshot;
+        if(!computedSnapshot && r.summarySessions) { computedSnapshot = parseSummaryToSnapshot(r.summarySessions); }
+
+        sessions.forEach(s => {
+            const selectEl = document.querySelector(`.session-select[data-id="${s.id}"]`);
+            const lunchCheckEl = document.getElementById(`lunch_${s.id}`);
+            const tutoringCheckEl = document.getElementById(`tutoring_${s.id}`);
+            
+            if (selectEl) selectEl.value = 'none';
+            if (lunchCheckEl) { lunchCheckEl.checked = false; lunchCheckEl.disabled = true; }
+            if (tutoringCheckEl) { tutoringCheckEl.checked = false; tutoringCheckEl.disabled = true; }
+
+            if(computedSnapshot && computedSnapshot[s.id]) {
+                let sType = computedSnapshot[s.id].type || 'none';
+                if(selectEl) selectEl.value = sType;
+                if(sType !== 'none') {
+                    if(lunchCheckEl) { lunchCheckEl.disabled = false; lunchCheckEl.checked = (computedSnapshot[s.id].lunch === true); }
+                    if(tutoringCheckEl) { tutoringCheckEl.disabled = false; tutoringCheckEl.checked = (computedSnapshot[s.id].tutoring === true); }
                 }
-            });
-        }
+            }
+        });
+        
         calculateFee();
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        showToast(`已成功反向回溯 ${r.name} 的完整選課狀態！`);
+        showToast(`已成功反向還原 ${r.name} 的所有梯次課輔、選課與便當狀態！`);
     }
 
     function deleteRecord(idx) {
@@ -1098,20 +1077,120 @@
     function exportToExcelCSV() {
         let records = JSON.parse(localStorage.getItem('tableTennisCampRecords') || '[]');
         if (records.length === 0) { alert('尚無資料可以匯出。'); return; }
-        
-        let csvContent = "\uFEFF序號,學生姓名,身分,7/1~7/3體驗課程,體驗課代訂便當,常規選課摘要,常規便當總數,總計費用(含餐費),純學費(不含餐費)\n";
-        
+        let csvContent = "\uFEFF序號,學生姓名,身分,7/1~7/3體驗課程,體驗課代訂便當,常規選課摘要,常規便當總數,加購代訂球拍,加購課輔摘要,總計費用(含餐費),純學費(不含餐費)\n";
         records.forEach((r, idx) => {
+            let racketText = r.buyRacket ? '是' : '否';
             let expText = r.expType === 'none' ? '不參加' : (r.expType==='half'?'半天班':'全天班');
             let expLunchText = r.expLunch ? '有訂便當' : '無';
-            csvContent += `"${idx+1}","${r.name}","${r.isTeam}","${expText}","${expLunchText}","${r.summarySessions}","${r.lunchCount}梯次",${r.total},${r.pureTuition}\n`;
+            let tutText = r.tutoringCount > 0 ? `${r.tutoringSummary}(共${r.tutoringCount}梯)` : '無';
+            csvContent += `"${idx+1}","${r.name}","${r.isTeam}","${expText}","${expLunchText}","${r.summarySessions}","${r.lunchCount}梯次","${racketText}","${tutText}",${r.total},${r.pureTuition}\n`;
         });
-        
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `115年桌球夏令營學員報名總表_V17_${new Date().toISOString().slice(0,10)}.csv`);
+        link.setAttribute("download", `115年桌球夏令營學員報名總表_${new Date().toISOString().slice(0,10)}.csv`);
         link.click();
+    }
+
+    function handleCsvFileImport(event) {
+        const file = event.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const text = new TextDecoder('utf-8').decode(new Uint8Array(e.target.result));
+            const lines = text.split(/\r?\n/);
+            if (lines.length <= 1) { alert('此 CSV 檔案未包含任何學員列！'); return; }
+
+            let importedCount = 0;
+            let existing = JSON.parse(localStorage.getItem('tableTennisCampRecords') || '[]');
+
+            for (let i = 1; i < lines.length; i++) {
+                let row = lines[i].trim(); if (!row) continue;
+                let cells = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (cells.length < 9) continue;
+
+                let name = cells[1].replace(/^["']|["']$/g, '').trim();
+                let identity = cells[2].replace(/^["']|["']$/g, '').trim();
+                let expTypeRaw = cells[3].replace(/^["']|["']$/g, '').trim();
+                let expLunchRaw = cells[4].replace(/^["']|["']$/g, '').trim();
+                let summary = cells[5].replace(/^["']|["']$/g, '').trim();
+                let lunchCountRaw = parseInt(cells[6].replace(/[^0-9]/g, '')) || 0;
+                let buyRacketRaw = cells[7].replace(/^["']|["']$/g, '').trim();
+                let tutoringSummaryRaw = cells[8].replace(/^["']|["']$/g, '').trim();
+
+                if (!name || name === '學生姓名') continue;
+
+                let isTeamRaw = (identity.includes('球隊'));
+                let expType = 'none';
+                if (expTypeRaw.includes('半')) expType = 'half'; if (expTypeRaw.includes('全')) expType = 'full';
+                let expLunch = (expLunchRaw.includes('有') || expLunchRaw.includes('訂'));
+                let buyRacket = (buyRacketRaw.includes('是') || buyRacketRaw.includes('1'));
+
+                let snapshot = parseSummaryToSnapshot(summary);
+                let courseTotal = (expType === 'half' ? 500 : (expType === 'full' ? 900 : 0));
+                let lunchTotal = (expLunch ? 255 : 0) + (lunchCountRaw * 425);
+                let halfCount = 0, fullCount = 0;
+
+                Object.keys(snapshot).forEach(k => {
+                    if (snapshot[k].type === 'half') { courseTotal += 1250; halfCount++; }
+                    if (snapshot[k].type === 'full') { courseTotal += 2500; fullCount++; }
+                });
+
+                let neededLunchCount = lunchCountRaw;
+                Object.keys(snapshot).forEach(k => { if (snapshot[k].type !== 'none' && neededLunchCount > 0) { snapshot[k].lunch = true; neededLunchCount--; } });
+
+                let tutoringCount = 0;
+                let tutoringSummary = '無';
+                if (tutoringSummaryRaw && tutoringSummaryRaw !== '—' && tutoringSummaryRaw !== '無') {
+                    let cleanTut = tutoringSummaryRaw.split('(')[0].trim();
+                    let tutSnapshot = parseSummaryToSnapshot(cleanTut + '(全)'); 
+                    Object.keys(tutSnapshot).forEach(k => {
+                        if (tutSnapshot[k].type !== 'none' && snapshot[k] && snapshot[k].type !== 'none') {
+                            snapshot[k].tutoring = true;
+                            tutoringCount++;
+                        }
+                    });
+                    if (tutoringCount > 0) {
+                        let tutList = []; Object.keys(snapshot).forEach(k => { if (snapshot[k].tutoring) tutList.push(k); });
+                        tutoringSummary = compressSessions(tutList);
+                    }
+                }
+
+                let addonTotal = (buyRacket ? 850 : 0) + (tutoringCount * 800);
+
+                const equiv = fullCount + Math.floor(halfCount / 2);
+                let multiDiscount = 0, socks = 0, balls = 0, bags = 0, freeExp = 0;
+                if (equiv >= 8) { multiDiscount = 4000; socks = 1; balls = 1; bags = 1; freeExp = 1; }
+                else if (equiv >= 6) { multiDiscount = 2200; balls = 1; freeExp = 1; }
+                else if (equiv >= 4) { multiDiscount = 1000; socks = 1; freeExp = 1; }
+                else if (equiv >= 2) { multiDiscount = 200; }
+
+                if (freeExp && (expType === 'half' || expType === 'full')) { multiDiscount += (expType === 'half' ? 500 : 900); }
+
+                let teamDiscount = 0;
+                let subAfter = Math.max(0, courseTotal - multiDiscount);
+                if (isTeamRaw && fullCount === 8) { teamDiscount = Math.round(subAfter * 0.15); }
+
+                let total = subAfter - teamDiscount + lunchTotal + addonTotal;
+                let pureTuition = subAfter - teamDiscount;
+
+                const importedRecord = {
+                    name: name, isTeam: isTeamRaw ? '桌球隊' : '一般生', isTeamRaw: isTeamRaw, expType: expType, expLunch: expLunch, summarySessions: summary,
+                    lunchCount: lunchCountRaw, buyRacket: buyRacket, tutoringSummary: tutoringSummary, tutoringCount: tutoringCount,
+                    total: total, pureTuition: pureTuition, lunchTotal: lunchTotal, earlyBird: "115/6/17",
+                    socks: socks, balls: balls, bags: bags, freeExpCount: freeExp, snapshot: snapshot
+                };
+
+                let idx = existing.findIndex(e => e.name === name);
+                if (idx > -1) existing[idx] = importedRecord; else existing.push(importedRecord);
+                importedCount++;
+            }
+
+            localStorage.setItem('tableTennisCampRecords', JSON.stringify(existing));
+            renderRecordsTable(); calculateFee();
+            showToast(`🎉 成功同步導入 Excel 總表共 ${importedCount} 筆名冊資料！`);
+            event.target.value = ''; 
+        };
+        reader.readAsArrayBuffer(file);
     }
 
     function triggerCopyAction() { copyNotificationText(); saveCurrentRecordToStorage(); }
@@ -1130,61 +1209,58 @@
 
     function closeModal() { document.getElementById('imageModal').style.display = 'none'; }
 
-    // 【全新重配】V19 徹底修復圖片生成時的佈局錯位與空白斷層
+    // 全全新適應佈局動態高度 Canvas 引擎
     function generateAndShowImage() {
         const canvas = document.getElementById('downloadCanvas');
         const ctx = canvas.getContext('2d');
         const d = globalCalculatedData;
 
-        // 【修正核心】將所有高度單位和佈局基準重新對齊
-        let headerHeight = 115; // 藍色頁首
-        let currentY = headerHeight + 35; // 姓名開始處
+        let headerHeight = 115;
+        let currentY = headerHeight + 35;
 
-        // 重新設計動態高度計算邏輯
         let courseLinesCount = d.simplifiedLines.length > 0 ? d.simplifiedLines.length : 1;
         let bonusLinesCount = d.bonuses.length;
 
-        // 計算 Canvas 的正確總高度
-        let estimatedCanvasHeight = headerHeight + 60 + // 頁首 + 姓名標題
+        let estimatedCanvasHeight = headerHeight + 60 + // 頁首 + 姓名抬頭
                                    40 + // 明細標題
-                                   (courseLinesCount * 32) + 20 + // 明細行 + 明細與優惠分隔間距
-                                   (bonusLinesCount * 28) + (bonusLinesCount > 0 ? 15 : 0) + // 優惠行 + 優惠與金額分隔間距
-                                   45 + // 金額欄
-                                   160 + // 繳費說明
-                                   40; // 提醒與感謝
+                                   (courseLinesCount * 32) + 20 + // 明細行 + 分隔間距
+                                   (bonusLinesCount * 28) + (bonusLinesCount > 0 ? 15 : 0) + // 優惠行 + 優惠分隔
+                                   45 + // 金額欄位
+                                   160 + // 繳費方式
+                                   40; // 溫馨提醒
         
-        canvas.height = Math.max(950, estimatedCanvasHeight);
+        canvas.height = Math.max(980, estimatedCanvasHeight);
 
-        // 步驟 1：重新刷白整個 Canvas
+        // 重新刷白背景
         ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // 步驟 2：繪製固定頁首
+        // 頂部大藍頁首
         ctx.fillStyle = '#1e3d59'; ctx.fillRect(0, 0, canvas.width, headerHeight);
         ctx.fillStyle = '#ffffff'; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center';
         ctx.fillText('115年 管嶼國小桌球夏令營', canvas.width / 2, 50);
         ctx.font = '14px sans-serif'; ctx.fillStyle = '#eef2f5';
         ctx.fillText('— 學生報名費用明細與繳費通知單 —', canvas.width / 2, 85);
 
-        // 步驟 3：繪製學員姓名
+        // 家長姓名與分隔線
         ctx.textAlign = 'left'; ctx.fillStyle = '#111111'; ctx.font = 'bold 18px sans-serif';
         ctx.fillText(`${d.name} 家長您好：`, 45, currentY);
         currentY += 18; ctx.strokeStyle = '#cbd5e0'; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(45, currentY); ctx.lineTo(605, currentY); ctx.stroke();
 
-        // 步驟 4：繪製選課明細
+        // 費用項目標題
         currentY += 35; ctx.fillStyle = '#1e3d59'; ctx.font = 'bold 16px sans-serif';
-        ctx.fillText('🏓 夏令營選課與代訂費用明細', 45, currentY);
+        ctx.fillText('🏓 夏令營選課與代訂/加購費用明細', 45, currentY);
         currentY += 15; ctx.font = '14px sans-serif'; ctx.fillStyle = '#333333';
         
         if (d.simplifiedLines.length === 0) {
-            ctx.fillStyle = '#718096'; ctx.fillText('（尚未選取任何課程或便當項目）', 60, currentY + 25); currentY += 40;
+            ctx.fillStyle = '#718096'; ctx.fillText('（尚未選取任何選課或加購項目）', 60, currentY + 25); currentY += 40;
         } else {
             d.simplifiedLines.forEach(line => { currentY += 32; ctx.fillText(`🏓 ${line}`, 60, currentY); });
         }
 
-        // 步驟 5：繪製滿額優惠與福利
+        // 滿額多梯折抵區
         if (d.multiDiscount > 0 || d.teamDiscount > 0 || d.bonuses.length > 0) {
-            currentY += 20; // 與明細分隔間距
+            currentY += 20;
             ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(45, currentY - 10); ctx.lineTo(605, currentY - 10); ctx.stroke();
             if (d.multiDiscount > 0) { ctx.fillStyle = '#e53e3e'; ctx.font = 'bold 15px sans-serif'; ctx.fillText(`🉐 滿額多梯優惠折抵: -$${d.multiDiscount.toLocaleString()}`, 60, currentY); currentY += 28; }
             if (d.teamDiscount > 0) { ctx.fillStyle = '#e53e3e'; ctx.font = 'bold 15px sans-serif'; ctx.fillText(`🏆 桌球隊專屬優惠 (常規8全打85折): -$${d.teamDiscount.toLocaleString()}`, 60, currentY); currentY += 28; }
@@ -1194,13 +1270,14 @@
             }
         }
 
-        // 步驟 6：繪製總計金額
-        currentY += 20; // 分隔間距
+        // 應繳總金額區
+        currentY += 20;
         ctx.strokeStyle = '#1e3d59'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(45, currentY); ctx.lineTo(605, currentY); ctx.stroke();
-        currentY += 42; ctx.fillStyle = '#1e3d59'; ctx.font = 'bold 18px sans-serif'; ctx.fillText('💰 總計應繳金額：', 45, currentY);
+        currentY += 42; ctx.fillStyle = '#1e3d59'; ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('💰 總計應繳金額：', 45, currentY);
         ctx.fillStyle = '#ff6f3c'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(`$${d.total.toLocaleString()} 元`, 605, currentY + 4);
 
-        // 步驟 7：繪製繳費方式
+        // 轉帳資料區塊
         ctx.textAlign = 'left'; currentY += 35; ctx.fillStyle = '#fcf8f2'; ctx.fillRect(45, currentY, 560, 140); ctx.strokeStyle = '#cbd5e0'; ctx.lineWidth = 1; ctx.strokeRect(45, currentY, 560, 140);
         ctx.fillStyle = '#1e3d59'; ctx.font = 'bold 15px sans-serif'; ctx.fillText('💳 繳費方式說明（二擇一）', 60, currentY + 30);
         ctx.font = '13px sans-serif'; ctx.fillStyle = '#4a5568';
@@ -1208,12 +1285,11 @@
         ctx.fillText(`帳號: 00812990126251 (請務必註明學生姓名)`, 60, currentY + 84);
         ctx.fillText('✅ 現金繳費 — 請直接至學校活動中心 3 樓桌球教室繳交給教練', 60, currentY + 114);
 
-        // 步驟 8：繪製底部提醒
+        // 頁尾資訊
         currentY += 165; ctx.fillStyle = '#ff6f3c'; ctx.font = 'bold 13px sans-serif';
         ctx.fillText(`💡 溫馨提醒：凡於 ${d.earlyBird} 前完成報名繳費者，「早鳥禮物」將於上課第一天贈送唷！`, 45, currentY);
         ctx.fillStyle = '#718096'; ctx.font = '12px sans-serif'; ctx.fillText('感謝您的支持與配合，讓我們陪伴孩子度過充滿活力又充實的暑假！ ❤️', 45, currentY + 26);
 
-        // 產出圖片並顯示
         document.getElementById('resultImage').src = canvas.toDataURL('image/png');
         document.getElementById('imageModal').style.display = 'flex';
         document.getElementById('pcDownloadBtn').onclick = function() {
@@ -1221,6 +1297,7 @@
         };
     }
 
+    // 初始化調用
     renderRecordsTable();
     calculateFee();
 </script>
