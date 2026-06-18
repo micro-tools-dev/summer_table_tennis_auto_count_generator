@@ -864,7 +864,7 @@
             txt += `\n✨ 【滿額超值贈品/福利清單】\n`;
             bonuses.forEach(b => { txt += `  🎁 ${b}\n`; });
         }
-        txt += `\n💰 總計金額：$${finalTotal.toLocaleString()}元\n\n⸻\n\n💳 繳費方式（二擇一）\n\n✅ 轉帳繳費\n   戶名：${bankUser}\n   銀行代碼：${bankCode}\n   帳號：${bankAccount}\n\n✅ 現金繳費（至桌球教室）\n\n⸻\n\n🎁 溫馨提醒：\n凡於 ${earlyBird} 前完成報名繳費者，「早鳥禮物」將於上課第一天贈送唷！\n\n感謝您的支持與配合 ❤️`;
+        txt += `\n💰 總計金額：$${finalTotal.toLocaleString()}元\n\n⸻\n\n💳 繳費方式（二擇一）\n\n✅ 轉帳繳費\n   戶名：${bankUser}\n   銀行代碼：${bankCode}\n   帳號：${bankAccount}\n\n✅ 現金繳費（至桌球教室）\n\n⸻\n\n感謝您的支持與配合 ❤️`;
         document.getElementById('textPreview').innerText = txt;
 
         let fullSessionSnapshot = {};
